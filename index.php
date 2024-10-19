@@ -24,7 +24,7 @@ echo "Current Orthanc Database: " . $orthancInfo['Name'] . "<br><br>";
 
 //Draw Search Box
 
-echo "<table width=500 cellpadding=4><form action=search.php method=POST>\n";
+echo "<table width=500 cellpadding=4><form action=index.php method=POST>\n";
 echo "<tr bgcolor=ddddff><td colspan=4 align=center>Search</td></tr>\n";
 echo "<tr><td align=right>Patient Name:</td><td><input type=text size=30 name=\"PatientName\" value=\"" . $_POST['PatientName'] . "\"></td>";
 echo "<td align=right>StudyDate:</td><td><input type=text size=10 name=\"StudyDate\" value=\"" . $_POST['StudyDate'] . "\"></td></tr>";
