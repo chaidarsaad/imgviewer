@@ -9,7 +9,7 @@
 // emsy chan
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-$orthanc = "http://localhost:8042/";
+$orthanc = "http://localhost:8042/tools/find";
 
 // If HTTP authentication is required
 // $orthanc = "http://username:password@10.2.40.143:8042/";
