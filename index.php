@@ -79,15 +79,33 @@ if (isset($_POST['patient_id'])) {
 					print_r($studyDetails); // Tampilkan detail lengkap response untuk debugging
 					echo "</pre>";
 
-					// Ambil instance pertama untuk preview
-					if (!empty($studyDetails['Instances'])) {
-						$instanceId = $studyDetails['Instances'][0]; // Mengambil instance pertama
+					// Cek apakah ada series
+					if (!empty($studyDetails['Series'])) {
+						foreach ($studyDetails['Series'] as $seriesId) {
+							// Ambil detail series
+							$seriesUrl = $orthancUrl . '/series/' . $seriesId;
+							$ch = curl_init($seriesUrl);
+							curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+							$seriesDetails = json_decode(curl_exec($ch), true);
+							curl_close($ch);
+
+							echo "<h4>Series ID: $seriesId</h4>";
+
+							// Cek apakah ada instance dalam series ini
+							if (!empty($seriesDetails['Instances'])) {
+								foreach ($seriesDetails['Instances'] as $instanceId) {
+									// Tampilkan preview gambar dari instance ini
+									echo "<p>Preview Gambar Instance ID: $instanceId</p>";
+									echo "<img src='" . getImagePreview($orthancUrl, $instanceId) . "' alt='DICOM Preview'>";
+								}
+							} else {
+								echo "<p>Tidak ada instance ditemukan untuk Series ID ini.</p>";
+							}
+						}
+					} else {
+						echo "<p>Tidak ada series ditemukan untuk Study ID ini.</p>";
+					}
 					?>
-						<p>Preview Gambar:</p>
-						<img src="<?php echo getImagePreview($orthancUrl, $instanceId); ?>" alt="DICOM Preview">
-					<?php } else { ?>
-						<p>Tidak ada instance ditemukan untuk Study ID ini.</p>
-					<?php } ?>
 				</li>
 			<?php endforeach; ?>
 		</ul>
