@@ -75,10 +75,14 @@ if (isset($_POST['patient_id'])) {
 					curl_close($ch);
 
 					// Ambil instance pertama untuk preview
-					$instanceId = $studyDetails['Instances'][0]; // Mengambil instance pertama
+					if (!empty($studyDetails['Instances'])) {
+						$instanceId = $studyDetails['Instances'][0]; // Mengambil instance pertama
 					?>
-					<p>Preview Gambar:</p>
-					<img src="<?php echo getImagePreview($orthancUrl, $instanceId); ?>" alt="DICOM Preview">
+						<p>Preview Gambar:</p>
+						<img src="<?php echo getImagePreview($orthancUrl, $instanceId); ?>" alt="DICOM Preview">
+					<?php } else { ?>
+						<p>Tidak ada instance ditemukan untuk Study ID ini.</p>
+					<?php } ?>
 				</li>
 			<?php endforeach; ?>
 		</ul>
