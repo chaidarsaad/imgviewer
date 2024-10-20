@@ -140,7 +140,7 @@ if (isset($_POST['patient_id'])) {
 							curl_close($ch);
 
 							echo "<pre>";
-							print_r($studyDetails);
+							// print_r($studyDetails);
 							echo "</pre>";
 
 							if (!empty($studyDetails['Series'])) {
