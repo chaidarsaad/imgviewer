@@ -139,9 +139,9 @@ if (isset($_POST['patient_id'])) {
 							$studyDetails = json_decode(curl_exec($ch), true);
 							curl_close($ch);
 
-							echo "<pre>";
+							// echo "<pre>";
 							// print_r($studyDetails);
-							echo "</pre>";
+							// echo "</pre>";
 
 							if (!empty($studyDetails['Series'])) {
 								foreach ($studyDetails['Series'] as $seriesId) {
@@ -150,6 +150,7 @@ if (isset($_POST['patient_id'])) {
 									curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 									$seriesDetails = json_decode(curl_exec($ch), true);
 									curl_close($ch);
+									echo "<pre>";
 
 									echo "<h4>Series ID: $seriesId</h4>";
 
@@ -161,6 +162,7 @@ if (isset($_POST['patient_id'])) {
 									} else {
 										echo "<p>Tidak ada instance ditemukan untuk Series ID ini.</p>";
 									}
+									echo "</pre>";
 								}
 							} else {
 								echo "<p>Tidak ada series ditemukan untuk Study ID ini.</p>";
