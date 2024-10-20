@@ -1,127 +1,91 @@
 <?php
+// URL server Orthanc
+$orthancUrl = 'http://localhost:8042';
 
-include('config.php');
-
-//Function to generate $data to be sent to curlSetOpt_PostFields. 
-//This is similar to http_build_query, but I couldn't find a similar one for use with CURL, so I wrote my own.
-function createCurlPostFieldsData($inputArray)
+// Fungsi untuk mencari studi berdasarkan Patient ID
+function findStudiesByPatientId($orthancUrl, $patientId)
 {
-	$string = "{";
-	foreach ($inputArray as $tag => $value) {
-		$string = $string . "\"" . $tag . "\":\"" . $value . "\",";
-	}
-	$string = rtrim($string, ',');
-	$string = $string . "}";
-	return $string;
+	$url = $orthancUrl . '/tools/find';
+
+	// Query untuk mencari berdasarkan PatientID
+	$data = json_encode([
+		"Level" => "Study",
+		"Query" => [
+			"PatientID" => $patientId
+		]
+	]);
+
+	// Inisialisasi cURL untuk POST request
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	$response = curl_exec($ch);
+	curl_close($ch);
+
+	return json_decode($response, true);
 }
 
-//Draw Header
-$orthancInfo = json_decode(file_get_contents($orthanc . "/system"), TRUE);
-
-echo "<center>\n";
-echo "<font size=+2>Isengard Browser</font><br>\n";
-echo "Current Orthanc Database: " . $orthancInfo['Name'] . "<br><br>";
-
-//Draw Search Box
-
-echo "<table width=500 cellpadding=4><form action=index.php method=POST>\n";
-echo "<tr bgcolor=ddddff><td colspan=4 align=center>Search</td></tr>\n";
-echo "<tr><td align=right>Patient Name:</td><td><input type=text size=30 name=\"PatientName\" value=\"" . $_POST['PatientName'] . "\"></td>";
-echo "<td align=right>StudyDate:</td><td><input type=text size=10 name=\"StudyDate\" value=\"" . $_POST['StudyDate'] . "\"></td></tr>";
-echo "<tr><td align=right>Patient ID:</td><td><input type=text size=10 name=\"PatientID\" value=\"" . $_POST['PatientID'] . "\"></td>";
-echo "<td align=right>Modality:</td><td><input type=text size=3 name=\"Modality\" value=\"" . $_POST['Modality'] . "\"></td></tr>";
-echo "<tr><td colspan=4 align=center><input type=submit value=\"Search\"></td></tr>\n";
-echo "</form></table><br>\n";
-
-//Populate Search Parameters through POST or GET
-if ($_POST['PatientName']) {
-	$_GET['PatientName'] = $_POST['PatientName'];
-}
-if ($_POST['PatientID']) {
-	$_GET['PatientID'] = $_POST['PatientID'];
-}
-if ($_POST['StudyDate']) {
-	$_GET['StudyDate'] = $_POST['StudyDate'];
-}
-if ($_POST['Modality']) {
-	$_GET['Modality'] = $_POST['Modality'];
+// Fungsi untuk menampilkan preview gambar dari instance tertentu
+function getImagePreview($orthancUrl, $instanceId)
+{
+	return $orthancUrl . '/instances/' . $instanceId . '/preview';
 }
 
-if (!$_GET['PatientName']) {
-	$_GET['PatientName'] = "*";
+// Jika form dikirim dengan Patient ID
+if (isset($_POST['patient_id'])) {
+	$patientId = $_POST['patient_id'];
+
+	// Cari studi berdasarkan Patient ID
+	$studies = findStudiesByPatientId($orthancUrl, $patientId);
 }
-if (!$_GET['PatientID']) {
-	$_GET['PatientID'] = "*";
-}
-if (!$_GET['StudyDate']) {
-	$_GET['StudyDate'] = "*";
-}
-if (!$_GET['Modality']) {
-	$_GET['Modality'] = "*";
-}
+?>
 
-$dicomTags = array(
-	"PatientName" => $_GET['PatientName'],
-	"PatientID" => $_GET['PatientID'],
-	"StudyDate" => $_GET['StudyDate'],
-	"Modality" => $_GET['Modality']
-);
+<!DOCTYPE html>
+<html>
 
-//Don't allow empty searches - Comment out if want to allow
-if ($_GET['PatientName'] == "*" && $_GET['PatientID'] == "*" && $_GET['StudyDate'] == "*" && $_GET['Modality'] == "*") {
-	die('<b>No Search Parameters Defined</b>');
-}
+<head>
+	<title>Orthanc DICOM Viewer by Patient ID</title>
+</head>
 
-$data = createCurlPostFieldsData($dicomTags);
+<body>
 
+	<h1>Cari Studi DICOM Berdasarkan Patient ID</h1>
 
-$curl = curl_init();
-curl_setopt($curl, CURLOPT_URL, $orthanc . '/modalities/local/find');
-curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($curl, CURLOPT_POST, 1);
-curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-$resp = curl_exec($curl);
-curl_close($curl);
+	<form method="POST" action="">
+		<label for="patient_id">Patient ID:</label>
+		<input type="text" id="patient_id" name="patient_id" required>
+		<button type="submit">Cari</button>
+	</form>
 
-$result = json_decode($resp, TRUE);
+	<?php if (isset($studies) && !empty($studies)): ?>
+		<h2>Studi yang Ditemukan:</h2>
+		<ul>
+			<?php foreach ($studies as $studyId): ?>
+				<li>
+					<h3>Study ID: <?php echo $studyId; ?></h3>
+					<!-- Ambil detail dari study -->
+					<?php
+					// Ambil detail dari study
+					$studyUrl = $orthancUrl . '/studies/' . $studyId;
+					$ch = curl_init($studyUrl);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					$studyDetails = json_decode(curl_exec($ch), true);
+					curl_close($ch);
 
-//echo "<pre>";
-//var_dump($result);
-//$lineColor = "ddddff";
+					// Ambil instance pertama untuk preview
+					$instanceId = $studyDetails['Instances'][0]; // Mengambil instance pertama
+					?>
+					<p>Preview Gambar:</p>
+					<img src="<?php echo getImagePreview($orthancUrl, $instanceId); ?>" alt="DICOM Preview">
+				</li>
+			<?php endforeach; ?>
+		</ul>
+	<?php elseif (isset($patientId)): ?>
+		<p>Tidak ada studi ditemukan untuk Patient ID: <?php echo htmlspecialchars($patientId); ?></p>
+	<?php endif; ?>
 
-echo "<table width=1000 cellpadding=5 cellspacing=0>\n";
-echo "<tr bgcolor=ddddff><td><b>Patient Name</td><td><b>PatientID</td>
-<td><b>Study Date</td><td><b>Modality</td>
-<td><b>Study Description</td><td><b>Series</td></tr>";
-foreach ($result as $patient) {
-	if (count($patient['Studies']) > 0) {
-		foreach ($patient['Studies'] as $study) {
-			if (count($study['Series']) > 0) {
-				if ($patient['PatientID'] != $previousPatientID) {
-					echo "<tr><td colspan=6><hr size=1></td></tr>";
-					//					if ($lineColor == "ddddff") { $lineColor = "ddffdd"; } else { $lineColor = "ddddff"; }
-					//					echo "<tr bgcolor=" . $lineColor . ">";
+</body>
 
-					echo "<tr><td valign=top><a href=loadViewer.php?patient=" . $patient['PatientID'] . " target=\"_blank\">" . $patient['PatientName'] . "</a></td>";
-					echo "<td valign=top>" . $patient['PatientID'] . "</td>";
-					$previousPatientID = $patient['PatientID'];
-				} else {
-					//					echo "<tr bgcolor=" . $lineColor . ">";
-					echo "<tr><td></td><td></td>";
-				}
-				echo "<td valign=top>" . $study['StudyDate'] . "</td>";
-				echo "<td valign=top>" . $study['Series'][0]['Modality'] . "</td>";
-				echo "<td valign=top><a href=loadViewer.php?study=" . $study['StudyInstanceUID'] . " target=\"_blank\">" . $study['StudyDescription'] . "</a></td>";
-
-				echo "<td valign=top>";
-				foreach ($study['Series'] as $series) {
-					echo "<a href=loadViewer.php?series=" . $series['SeriesInstanceUID'] . " target=\"_blank\">" . $series['SeriesDescription'] . "</a>";
-					echo "<br>\n";
-				}
-				echo "</td></tr>";
-			}
-		}
-	}
-}
-echo "<tr><td colspan=6><hr size=1></td></tr>";
-echo "</table>";
+</html>
