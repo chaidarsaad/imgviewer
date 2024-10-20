@@ -74,6 +74,11 @@ if (isset($_POST['patient_id'])) {
 					$studyDetails = json_decode(curl_exec($ch), true);
 					curl_close($ch);
 
+					// Debug: Tampilkan seluruh detail response untuk studi ini
+					echo "<pre>";
+					print_r($studyDetails); // Tampilkan detail lengkap response untuk debugging
+					echo "</pre>";
+
 					// Ambil instance pertama untuk preview
 					if (!empty($studyDetails['Instances'])) {
 						$instanceId = $studyDetails['Instances'][0]; // Mengambil instance pertama
