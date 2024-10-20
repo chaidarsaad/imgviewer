@@ -131,7 +131,6 @@ if (isset($_POST['patient_id'])) {
 				<ul>
 					<?php foreach ($studies as $studyId): ?>
 						<li>
-							<h3>Study ID: <?php echo $studyId; ?></h3>
 							<?php
 							$studyUrl = $orthancUrl . '/studies/' . $studyId;
 							$ch = curl_init($studyUrl);
