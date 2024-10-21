@@ -73,38 +73,22 @@ function createDateRange($startDate, $endDate)
 	return $dateRange;
 }
 
+// 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
 	$patientId = $_POST['patient_id'];
 	$startDate = $_POST['startDate'];
 	$endDate = $_POST['endDate'];
 
 	$dates = createDateRange($startDate, $endDate);
-	$results = [];
-	$uniqueIDs = []; // Track unique IDs
 
+	$results = [];
 	foreach ($dates as $currentDate) {
 		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
-		$studyResults = findStudies($orthancUrl, $patientId, $currentDate);
 
-		// Process daily results
 		if (!empty($dailyResults)) {
 			foreach ($dailyResults as $instance) {
-				if (!in_array($instance['ID'], $uniqueIDs)) {
-					$instance['SearchDate'] = $currentDate;
-					$results[] = $instance;
-					$uniqueIDs[] = $instance['ID']; // Add to unique IDs
-				}
-			}
-		}
-
-		// Process study results
-		if (!empty($studyResults)) {
-			foreach ($studyResults as $study) {
-				if (!in_array($study['ID'], $uniqueIDs)) {
-					$study['SearchDate'] = $currentDate;
-					$results[] = $study;
-					$uniqueIDs[] = $study['ID']; // Add to unique IDs
-				}
+				$instance['SearchDate'] = $currentDate;
+				$results[] = $instance;
 			}
 		}
 	}
@@ -146,11 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 						<li>
 							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
 							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
-
-							<?php if (isset($instance['ParentPatient'])): ?>
-								<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" class="button">Explorer</a>
-							<?php endif; ?>
-							<a href="http://localhost:8042/volview/index.html?names=[archive.zip]&urls=[../studies/<?php echo htmlspecialchars($instance['ID']); ?>/archive]" class="button">VolView</a>
 						</li>
 					<?php endforeach; ?>
 				</ul>
