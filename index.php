@@ -99,9 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 						<li>
 							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
 							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
-
-							<!-- Tombol Explorer dan VolView -->
-
 						</li>
 					<?php endforeach; ?>
 				</ul>
