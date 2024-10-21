@@ -95,12 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 		<div class="results">
 			<?php if (isset($results) && !empty($results)): ?>
 				<h1>Studi yang Ditemukan Pasien ID: <?php echo htmlspecialchars($patientId); ?></h1>
+				<pre><?php print_r($results); ?></pre>
+
 				<ul>
 					<?php foreach ($results as $instance): ?>
 						<li>
-							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
-							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
-
 							<!-- Button Explorer -->
 							<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" target="_blank">
 								<button type="button">Explorer</button>
@@ -110,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 							<a href="http://localhost:8042/volview/index.html?names=[archive.zip]&urls=[../studies/<?php echo htmlspecialchars($instance['ID']); ?>/archive]" target="_blank">
 								<button type="button">VolView</button>
 							</a>
+
+							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
+							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
 						</li>
 					<?php endforeach; ?>
 				</ul>
