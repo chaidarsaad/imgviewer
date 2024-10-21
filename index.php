@@ -121,7 +121,13 @@ if (isset($_POST['patient_id'])) {
 		<form method="POST" action="">
 
 			<label for="patient_id">Patient ID:</label>
-			<input type="text" id="patient_id" name="patient_id" required>
+			<input type="text" id="patient_id" name="patient_id" value="<?php echo isset($_POST['patient_id']) ? htmlspecialchars($_POST['patient_id']) : ''; ?>" required>
+
+			<!-- <label for="startDate">Start Date:</label>
+			<input type="date" id="startDate" name="startDate" value="<?php echo isset($_POST['startDate']) ? htmlspecialchars($_POST['startDate']) : ''; ?>" required>
+
+			<label for="endDate">End Date:</label>
+			<input type="date" id="endDate" name="endDate" value="<?php echo isset($_POST['endDate']) ? htmlspecialchars($_POST['endDate']) : ''; ?>" required> -->
 
 			<input type="submit" value="Cari">
 		</form>
@@ -139,9 +145,9 @@ if (isset($_POST['patient_id'])) {
 								$studyDetails = json_decode(curl_exec($ch), true);
 								curl_close($ch);
 
-								// echo "<pre>";
-								// print_r($studyDetails);
-								// echo "</pre>";
+								echo "<pre>";
+								print_r($studyDetails);
+								echo "</pre>";
 
 								if (!empty($studyDetails['Series'])) {
 									foreach ($studyDetails['Series'] as $seriesId) {
