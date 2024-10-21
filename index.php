@@ -73,51 +73,36 @@ function createDateRange($startDate, $endDate)
 	return $dateRange;
 }
 
-// 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
 	$patientId = $_POST['patient_id'];
 	$startDate = $_POST['startDate'];
 	$endDate = $_POST['endDate'];
 
 	$dates = createDateRange($startDate, $endDate);
-
 	$results = [];
-	foreach ($dates as $currentDate) {
-		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
+	$uniqueInstances = []; // Track unique instance IDs
 
-		if (!empty($dailyResults)) {
-			foreach ($dailyResults as $instance) {
-				$instance['SearchDate'] = $currentDate;
-				$results[] = $instance;
-			}
-		}
-	}
-}
-
-// 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
-	$patientId = $_POST['patient_id'];
-	$startDate = $_POST['startDate'];
-	$endDate = $_POST['endDate'];
-
-	$dates = createDateRange($startDate, $endDate);
-
-	$results = [];
 	foreach ($dates as $currentDate) {
 		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
 		$studyResults = findStudies($orthancUrl, $patientId, $currentDate);
 
 		if (!empty($dailyResults)) {
 			foreach ($dailyResults as $instance) {
-				$instance['SearchDate'] = $currentDate;
-				$results[] = $instance;
+				if (!in_array($instance['ID'], $uniqueInstances)) {
+					$instance['SearchDate'] = $currentDate;
+					$results[] = $instance;
+					$uniqueInstances[] = $instance['ID']; // Add to unique instances
+				}
 			}
 		}
 
 		if (!empty($studyResults)) {
 			foreach ($studyResults as $study) {
-				$study['SearchDate'] = $currentDate; // Tambahkan tanggal pencarian
-				$results[] = $study; // Menyimpan hasil studi
+				if (!in_array($study['ID'], $uniqueInstances)) {
+					$study['SearchDate'] = $currentDate;
+					$results[] = $study; // Store the study
+					$uniqueInstances[] = $study['ID']; // Add to unique instances
+				}
 			}
 		}
 	}
