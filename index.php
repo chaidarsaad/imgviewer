@@ -6,7 +6,7 @@ function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 	$url = $orthancUrl . '/tools/find';
 
 	$data = json_encode([
-		'Level' => 'Studies',
+		'Level' => 'Instance',
 		'Query' => [
 			'PatientID' => $patientId,
 			'StudyDate' => $studyDate
@@ -99,9 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 					<?php foreach ($results as $instance): ?>
 						<li>
 							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
-							<p>Preview Gambar:
-								<img src="<?php echo $orthancUrl . '/series/' . htmlspecialchars($instance['Series'][0]) . '/preview'; ?>" alt="DICOM Preview">
-							</p>
+							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
+
 							<!-- Button Explorer -->
 							<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" target="_blank">
 								<button type="button">Explorer</button>
