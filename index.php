@@ -6,6 +6,7 @@ function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 	$url = $orthancUrl . '/tools/find';
 
 	$data = json_encode([
+		'Level' => 'Instance',
 		'Query' => [
 			'PatientID' => $patientId,
 			'StudyDate' => $studyDate
@@ -34,7 +35,7 @@ function createDateRange($startDate, $endDate)
 	$end = new DateTime($endDate);
 	$end = $end->modify('+1 day');
 
-	$interval = new DateInterval('P1D');
+	$interval = new DateInterval('P1D');  // Interval 1 hari
 	$period = new DatePeriod($start, $interval, $end);
 
 	$dateRange = [];
