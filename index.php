@@ -1,16 +1,17 @@
 <?php
 $orthancUrl = 'http://localhost:8042';
 
-function findStudiesByPatientIdAndDateRange($orthancUrl, $patientId, $startDate, $endDate)
+function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 {
 	$url = $orthancUrl . '/tools/find';
 
 	$data = json_encode([
-		"Level" => "Study",
-		"Query" => [
-			"PatientID" => $patientId,
-			"StudyDate" => [$startDate . '-' . $endDate]
-		]
+		'Level' => 'Instance',
+		'Query' => [
+			'PatientID' => $patientId,
+			'StudyDate' => $studyDate
+		],
+		'Expand' => true
 	]);
 
 	$ch = curl_init($url);
@@ -21,21 +22,48 @@ function findStudiesByPatientIdAndDateRange($orthancUrl, $patientId, $startDate,
 	$response = curl_exec($ch);
 	curl_close($ch);
 
+	if (!$response) {
+		return ['error' => 'Tidak ada respons dari server Orthanc.'];
+	}
+
 	return json_decode($response, true);
 }
 
-function getImagePreview($orthancUrl, $instanceId)
+function createDateRange($startDate, $endDate)
 {
-	return $orthancUrl . '/instances/' . $instanceId . '/preview';
+	$start = new DateTime($startDate);
+	$end = new DateTime($endDate);
+	$end = $end->modify('+1 day');
+
+	$interval = new DateInterval('P1D');  // Interval 1 hari
+	$period = new DatePeriod($start, $interval, $end);
+
+	$dateRange = [];
+	foreach ($period as $date) {
+		$dateRange[] = $date->format('Ymd');
+	}
+
+	return $dateRange;
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
 	$patientId = $_POST['patient_id'];
+	$startDate = $_POST['startDate'];
+	$endDate = $_POST['endDate'];
 
-	$startDate = (new DateTime($_POST['startDate']))->format('Ymd');
-	$endDate = (new DateTime($_POST['endDate']))->format('Ymd');
+	$dates = createDateRange($startDate, $endDate);
 
-	$studies = findStudiesByPatientIdAndDateRange($orthancUrl, $patientId, $startDate, $endDate);
+	$results = [];
+	foreach ($dates as $currentDate) {
+		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
+
+		if (!empty($dailyResults)) {
+			foreach ($dailyResults as $instance) {
+				$instance['SearchDate'] = $currentDate;
+				$results[] = $instance;
+			}
+		}
+	}
 }
 ?>
 
@@ -65,48 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 		</form>
 
 		<div class="results">
-			<?php if (isset($studies) && !empty($studies)): ?>
+			<?php if (isset($results) && !empty($results)): ?>
 				<h1>Studi yang Ditemukan Pasien ID: <?php echo htmlspecialchars($patientId); ?></h1>
 				<ul>
-					<?php foreach ($studies as $studyId): ?>
+					<?php foreach ($results as $instance): ?>
 						<li>
-							<h3>Study ID: <?php echo $studyId; ?></h3>
-							<?php
-							$studyUrl = $orthancUrl . '/studies/' . $studyId;
-							$ch = curl_init($studyUrl);
-							curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-							$studyDetails = json_decode(curl_exec($ch), true);
-							curl_close($ch);
-
-							echo "<pre>";
-							print_r($studyDetails);
-							echo "</pre>";
-
-							if (!empty($studyDetails['Series'])) {
-								foreach ($studyDetails['Series'] as $seriesId) {
-									$seriesUrl = $orthancUrl . '/series/' . $seriesId;
-									$ch = curl_init($seriesUrl);
-									curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-									$seriesDetails = json_decode(curl_exec($ch), true);
-									curl_close($ch);
-									echo "<pre>";
-
-									echo "<h4>Series ID: $seriesId</h4>";
-
-									if (!empty($seriesDetails['Instances'])) {
-										foreach ($seriesDetails['Instances'] as $instanceId) {
-											echo "<p>Preview Gambar Instance ID: $instanceId</p>";
-											echo "<img src='" . getImagePreview($orthancUrl, $instanceId) . "' alt='DICOM Preview'>";
-										}
-									} else {
-										echo "<p>Tidak ada instance ditemukan untuk Series ID ini.</p>";
-									}
-									echo "</pre>";
-								}
-							} else {
-								echo "<p>Tidak ada series ditemukan untuk Study ID ini.</p>";
-							}
-							?>
+							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
+							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
 						</li>
 					<?php endforeach; ?>
 				</ul>
