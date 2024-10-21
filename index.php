@@ -101,11 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
 
 							<!-- Tombol Explorer dan VolView -->
-							<p>
 
-								<a href="">Explorer</a>
-								<a href="">VolView</a>
-							</p>
 						</li>
 					<?php endforeach; ?>
 				</ul>
