@@ -1,12 +1,39 @@
 <?php
 $orthancUrl = 'http://localhost:8042';
-
 function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 {
 	$url = $orthancUrl . '/tools/find';
 
 	$data = json_encode([
 		'Level' => 'Instance',
+		'Query' => [
+			'PatientID' => $patientId,
+			'StudyDate' => $studyDate
+		],
+		'Expand' => true
+	]);
+
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	$response = curl_exec($ch);
+	curl_close($ch);
+
+	if (!$response) {
+		return ['error' => 'Tidak ada respons dari server Orthanc.'];
+	}
+
+	return json_decode($response, true);
+}
+
+function findStudies($orthancUrl, $patientId, $studyDate)
+{
+	$url = $orthancUrl . '/tools/find';
+
+	$data = json_encode([
+		'Level' => 'Study', // Mengambil studi berdasarkan PatientID dan StudyDate
 		'Query' => [
 			'PatientID' => $patientId,
 			'StudyDate' => $studyDate
@@ -46,6 +73,7 @@ function createDateRange($startDate, $endDate)
 	return $dateRange;
 }
 
+// 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
 	$patientId = $_POST['patient_id'];
 	$startDate = $_POST['startDate'];
@@ -65,6 +93,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 		}
 	}
 }
+
+// 
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset($_POST['startDate']) && isset($_POST['endDate'])) {
+	$patientId = $_POST['patient_id'];
+	$startDate = $_POST['startDate'];
+	$endDate = $_POST['endDate'];
+
+	$dates = createDateRange($startDate, $endDate);
+
+	$results = [];
+	foreach ($dates as $currentDate) {
+		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
+		$studyResults = findStudies($orthancUrl, $patientId, $currentDate);
+
+		if (!empty($dailyResults)) {
+			foreach ($dailyResults as $instance) {
+				$instance['SearchDate'] = $currentDate;
+				$results[] = $instance;
+			}
+		}
+
+		if (!empty($studyResults)) {
+			foreach ($studyResults as $study) {
+				$study['SearchDate'] = $currentDate; // Tambahkan tanggal pencarian
+				$results[] = $study; // Menyimpan hasil studi
+			}
+		}
+	}
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -95,23 +153,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 		<div class="results">
 			<?php if (isset($results) && !empty($results)): ?>
 				<h1>Studi yang Ditemukan Pasien ID: <?php echo htmlspecialchars($patientId); ?></h1>
-				<pre><?php print_r($results); ?></pre>
 
 				<ul>
 					<?php foreach ($results as $instance): ?>
 						<li>
-							<!-- Button Explorer -->
-							<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" target="_blank">
-								<button type="button">Explorer</button>
-							</a>
-
-							<!-- Button VolView -->
-							<a href="http://localhost:8042/volview/index.html?names=[archive.zip]&urls=[../studies/<?php echo htmlspecialchars($instance['ID']); ?>/archive]" target="_blank">
-								<button type="button">VolView</button>
-							</a>
-
 							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
 							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
+
+							<?php if (isset($instance['ParentPatient'])): ?>
+								<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" class="button">Explorer</a>
+							<?php endif; ?>
+							<a href="http://localhost:8042/volview/index.html?names=[archive.zip]&urls=[../studies/<?php echo htmlspecialchars($instance['ID']); ?>/archive]" class="button">VolView</a>
 						</li>
 					<?php endforeach; ?>
 				</ul>
