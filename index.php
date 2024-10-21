@@ -26,6 +26,11 @@ function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 		return ['error' => 'Tidak ada respons dari server Orthanc.'];
 	}
 
+	// Tambahkan ini untuk melihat respons yang diterima dari Orthanc
+	echo "<pre>";
+	print_r(json_decode($response, true));
+	echo "</pre>";
+
 	return json_decode($response, true);
 }
 
