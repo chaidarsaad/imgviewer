@@ -6,7 +6,7 @@ function findStudiesByPatientIdAndDate($orthancUrl, $patientId, $studyDate)
 	$url = $orthancUrl . '/tools/find';
 
 	$data = json_encode([
-		'Level' => 'Instance',
+		'Level' => 'Studies',
 		'Query' => [
 			'PatientID' => $patientId,
 			'StudyDate' => $studyDate
@@ -35,7 +35,7 @@ function createDateRange($startDate, $endDate)
 	$end = new DateTime($endDate);
 	$end = $end->modify('+1 day');
 
-	$interval = new DateInterval('P1D');  // Interval 1 hari
+	$interval = new DateInterval('P1D');
 	$period = new DatePeriod($start, $interval, $end);
 
 	$dateRange = [];
@@ -101,15 +101,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 							<h3>Instance ID: <?php echo htmlspecialchars($instance['ID']); ?> (Tanggal: <?php echo htmlspecialchars($instance['SearchDate']); ?>)</h3>
 							<p>Preview Gambar: <img src="<?php echo $orthancUrl . '/instances/' . htmlspecialchars($instance['ID']) . '/preview'; ?>" alt="DICOM Preview"></p>
 
-							<!-- Tombol Explorer dan VolView -->
-							<p>
-								<a href="<?php echo $orthancUrl . '/app/explorer.html#patient?uuid=' . htmlspecialchars($instance['ID']); ?>" target="_blank">
-									<button>Explorer</button>
-								</a>
-								<a href="<?php echo $orthancUrl . '/volview/index.html?names=[archive.zip]&urls=[../studies/' . htmlspecialchars($instance['ID']) . '/archive]'; ?>" target="_blank">
-									<button>VolView</button>
-								</a>
-							</p>
+							<!-- Button Explorer -->
+							<a href="http://localhost:8042/app/explorer.html#patient?uuid=<?php echo htmlspecialchars($instance['ParentPatient']); ?>" target="_blank">
+								<button type="button">Explorer</button>
+							</a>
+
+							<!-- Button VolView -->
+							<a href="http://localhost:8042/volview/index.html?names=[archive.zip]&urls=[../studies/<?php echo htmlspecialchars($instance['ID']); ?>/archive]" target="_blank">
+								<button type="button">VolView</button>
+							</a>
 						</li>
 					<?php endforeach; ?>
 				</ul>
