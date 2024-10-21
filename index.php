@@ -103,10 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 							<!-- Tombol Explorer dan VolView -->
 							<p>
 								<a href="<?php echo $orthancUrl . '/app/explorer.html#patient?uuid=' . htmlspecialchars($instance['ID']); ?>" target="_blank">
-									<button>Explorer</button>
+									Explorer
 								</a>
 								<a href="<?php echo $orthancUrl . '/volview/index.html?names=[archive.zip]&urls=[../studies/' . htmlspecialchars($instance['ID']) . '/archive]'; ?>" target="_blank">
-									<button>VolView</button>
+									VolView
 								</a>
 							</p>
 						</li>
