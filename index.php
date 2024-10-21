@@ -80,28 +80,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['patient_id']) && isset
 
 	$dates = createDateRange($startDate, $endDate);
 	$results = [];
-	$uniqueInstances = []; // Track unique instance IDs
+	$uniqueIDs = []; // Track unique IDs
 
 	foreach ($dates as $currentDate) {
 		$dailyResults = findStudiesByPatientIdAndDate($orthancUrl, $patientId, $currentDate);
 		$studyResults = findStudies($orthancUrl, $patientId, $currentDate);
 
+		// Process daily results
 		if (!empty($dailyResults)) {
 			foreach ($dailyResults as $instance) {
-				if (!in_array($instance['ID'], $uniqueInstances)) {
+				if (!in_array($instance['ID'], $uniqueIDs)) {
 					$instance['SearchDate'] = $currentDate;
 					$results[] = $instance;
-					$uniqueInstances[] = $instance['ID']; // Add to unique instances
+					$uniqueIDs[] = $instance['ID']; // Add to unique IDs
 				}
 			}
 		}
 
+		// Process study results
 		if (!empty($studyResults)) {
 			foreach ($studyResults as $study) {
-				if (!in_array($study['ID'], $uniqueInstances)) {
+				if (!in_array($study['ID'], $uniqueIDs)) {
 					$study['SearchDate'] = $currentDate;
-					$results[] = $study; // Store the study
-					$uniqueInstances[] = $study['ID']; // Add to unique instances
+					$results[] = $study;
+					$uniqueIDs[] = $study['ID']; // Add to unique IDs
 				}
 			}
 		}
